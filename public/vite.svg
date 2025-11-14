@@ -1,0 +1,25 @@
+<svg
+  viewBox="0 0 50 50"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+  width="40"
+  height="40"
+  class="logo-svg"
+>
+  <defs>
+    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563EB" />   <!-- blue-600 -->
+      <stop offset="50%" stop-color="#4F46E5" />  <!-- indigo-600 -->
+      <stop offset="100%" stop-color="#8B5CF6" /> <!-- purple-600 -->
+    </linearGradient>
+  </defs>
+  <!-- Book Shape with shadow -->
+  <rect x="10" y="8" width="30" height="34" rx="2" fill="url(#logoGradient)" class="rect-bg" />
+  <!-- Book spine shadow -->
+  <rect x="10" y="8" width="3" height="34" rx="1" fill="black" opacity="0.15" />
+  <!-- Lines representing text with staggered animation -->
+  <rect x="15" y="15" width="8" height="2" rx="1" fill="white" opacity="0.9" class="fade-in" />
+  <rect x="15" y="20" width="20" height="2" rx="1" fill="white" opacity="0.9" class="fade-in delay-100" />
+  <rect x="15" y="25" width="20" height="2" rx="1" fill="white" opacity="0.9" class="fade-in delay-200" />
+  <rect x="15" y="30" width="15" height="2" rx="1" fill="white" opacity="0.9" class="fade-in delay-300" />
+</svg>
