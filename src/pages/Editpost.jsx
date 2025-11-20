@@ -1,147 +1,156 @@
-import React, {useEffect, useState} from 'react'
-import {Container, PostForm} from '../components'
+import React, { useEffect, useState } from "react";
+import { Container, PostForm } from "../components";
 import appwriteService from "../appwrite/config";
-import { useNavigate,  useParams } from 'react-router-dom';
-
-
+import { useNavigate, useParams } from "react-router-dom";
 
 function EditPost() {
-    const [post, setPosts] = useState(null)
-    const [loading, setLoading] = useState(true)
-    const {slug} = useParams()
-    const navigate = useNavigate()
+    const [post, setPost] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const { slug } = useParams();
+    const navigate = useNavigate();
 
     useEffect(() => {
         if (slug) {
             appwriteService.getPost(slug).then((post) => {
-                if (post) {
-                    setPosts(post)
-                } else {
-                    navigate('/')
-                }
-                setLoading(false)
-            })
+                if (post) setPost(post);
+                else navigate("/");
+                setLoading(false);
+            });
         } else {
-            navigate('/')
+            navigate("/");
         }
-    }, [slug, navigate])
+    }, [slug, navigate]);
 
+    /* ------------------------------------------------------------
+       🟣 CYBERPUNK LOADING SCREEN
+    ------------------------------------------------------------ */
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-gray-50 to-white">
-                <div className="text-center">
-                    <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-gray-300 border-r-green-500 mb-4"></div>
-                    <h1 className="text-lg sm:text-xl font-semibold text-gray-700">Loading post...</h1>
-                    <p className="text-sm text-gray-500 mt-2">Please wait</p>
+            <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-black relative overflow-hidden">
+                {/* Neon grid */}
+                <div className="pointer-events-none absolute inset-0 opacity-40">
+                    <div
+                        className="absolute inset-0"
+                        style={{
+                            backgroundImage:
+                                "radial-gradient(circle at 1px 1px, rgba(148,163,184,0.27) 1px, transparent 0)",
+                            backgroundSize: "22px 22px",
+                        }}
+                    />
+                </div>
+
+                <div className="relative text-center">
+                    <div className="relative inline-block mb-6">
+                        <div className="absolute inset-0 blur-xl bg-gradient-to-r from-cyan-500 via-fuchsia-500 to-emerald-400 opacity-60 animate-pulse" />
+                        <div className="relative h-16 w-16 rounded-2xl bg-slate-900 border border-slate-700 shadow-[0_0_35px_rgba(56,189,248,0.7)] flex items-center justify-center">
+                            <div className="w-10 h-10 rounded-full animate-spin border-4 border-slate-800 border-t-green-400 border-r-cyan-400" />
+                        </div>
+                    </div>
+                    <p className="text-cyan-300 text-xs font-mono uppercase tracking-[0.3em]">
+                        Loading Post
+                    </p>
                 </div>
             </div>
-        )
+        );
     }
 
-  return post ? (
-    <div className='py-8 sm:py-12 min-h-[calc(100vh-200px)] bg-gradient-to-b from-gray-50 to-white'>
-        <Container>
-            {/* Hero Section - Responsive */}
-            <div className="mb-8 sm:mb-10 text-center animate-fadeInDown">
-                {/* Icon with animation */}
-                <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 bg-green-100 rounded-full mb-4 relative group">
-                    <div className="absolute inset-0 bg-green-200 rounded-full opacity-0 group-hover:opacity-50 animate-ping"></div>
-                    <svg className="relative w-7 h-7 sm:w-8 sm:h-8 text-green-600 transform transition-transform group-hover:rotate-12 duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                </div>
-                
-                <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-3 tracking-tight animate-fadeIn">
-                    Edit Post
-                </h1>
-                <p className="text-gray-600 text-base sm:text-lg md:text-xl max-w-2xl mx-auto leading-relaxed animate-fadeIn animation-delay-200">
-                    Update your post content, images, and settings
-                </p>
+    /* ------------------------------------------------------------
+       🟣 MAIN EDIT PAGE — CYBERPUNK UI
+    ------------------------------------------------------------ */
+    return post ? (
+        <div className="relative py-10 sm:py-14 min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-black overflow-hidden">
 
-                {/* Decorative underline */}
-                <div className="mt-4 mx-auto w-20 h-1 bg-gradient-to-r from-green-600 to-teal-600 rounded-full animate-expand"></div>
+            {/* Neon cyber grid background */}
+            <div className="pointer-events-none fixed inset-0 opacity-40 mix-blend-screen">
+                <div
+                    className="absolute inset-0"
+                    style={{
+                        backgroundImage:
+                            "radial-gradient(circle at 1px 1px, rgba(148,163,184,0.27) 1px, transparent 0)",
+                        backgroundSize: "22px 22px",
+                    }}
+                />
             </div>
 
-            {/* Form Container - Responsive */}
-            <div className="max-w-6xl mx-auto animate-fadeInUp animation-delay-400">
-                <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-100 p-6 sm:p-8 md:p-10 transition-all duration-300 hover:shadow-xl">
-                    <PostForm post={post} />
+            <Container>
+                {/* HEADER */}
+                <div className="mb-10 text-center animate-fadeInDown relative">
+
+                    {/* Neon Icon */}
+                    <div className="relative flex justify-center mb-6">
+                        <div className="absolute inset-0 blur-xl bg-gradient-to-r from-green-400 via-cyan-500 to-emerald-500 opacity-60 animate-pulse" />
+                        <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-slate-900 border border-slate-700/70 shadow-[0_0_30px_rgba(74,222,128,0.7)] flex items-center justify-center">
+                            <svg
+                                className="w-10 h-10 sm:w-12 sm:h-12 text-green-300 drop-shadow-[0_0_15px_rgba(74,222,128,0.9)] transform transition-transform duration-300 group-hover:rotate-6"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={1.8}
+                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                />
+                            </svg>
+                        </div>
+                    </div>
+
+                    {/* Title */}
+                    <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-slate-50 tracking-tight animate-fadeIn">
+                        Edit{" "}
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-300 via-cyan-400 to-emerald-300 drop-shadow-[0_0_40px_rgba(74,222,128,0.8)]">
+                            Post
+                        </span>
+                    </h1>
+
+                    {/* Subtitle */}
+                    <p className="text-slate-400 text-base sm:text-lg md:text-xl max-w-2xl mx-auto mt-2 leading-relaxed animate-fadeIn animation-delay-200">
+                        Update your content, refine your visuals, or enhance your writing.
+                    </p>
+
+                    {/* Cyber underline */}
+                    <div className="mt-5 flex justify-center">
+                        <div className="h-[2px] w-40 sm:w-64 bg-gradient-to-r from-transparent via-green-400 to-transparent relative">
+                            <div className="absolute -top-[3px] left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-green-400 shadow-[0_0_20px_rgba(74,222,128,1)]" />
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </Container>
 
-        {/* CSS Animations */}
-        <style>{`
-            @keyframes fadeInDown {
-                from {
-                    opacity: 0;
-                    transform: translateY(-20px);
+                {/* EDIT FORM */}
+                <div className="relative max-w-6xl mx-auto animate-fadeInUp animation-delay-400">
+
+                    {/* Neon glow background */}
+                    <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-green-500/10 via-cyan-500/10 to-emerald-400/10 blur-xl" />
+
+                    <div className="relative bg-slate-900/90 rounded-2xl border border-slate-700/80 shadow-[0_18px_40px_rgba(15,23,42,0.95)] p-6 sm:p-8 md:p-10 backdrop-blur hover:shadow-[0_0_40px_rgba(74,222,128,0.45)] transition-shadow duration-300">
+                        <PostForm post={post} />
+                    </div>
+                </div>
+            </Container>
+
+            {/* ANIMATIONS */}
+            <style>{`
+                @keyframes fadeInDown {
+                    from { opacity: 0; transform: translateY(-20px); }
+                    to { opacity: 1; transform: translateY(0); }
                 }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
                 }
-            }
-
-            @keyframes fadeIn {
-                from { opacity: 0; }
-                to { opacity: 1; }
-            }
-
-            @keyframes fadeInUp {
-                from {
-                    opacity: 0;
-                    transform: translateY(30px);
+                @keyframes fadeInUp {
+                    from { opacity: 0; transform: translateY(30px); }
+                    to { opacity: 1; transform: translateY(0); }
                 }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-
-            @keyframes expand {
-                from { width: 0; }
-                to { width: 5rem; }
-            }
-
-            @keyframes bounce-slow {
-                0%, 100% {
-                    transform: translateY(0);
-                }
-                50% {
-                    transform: translateY(-5px);
-                }
-            }
-
-            .animate-fadeInDown {
-                animation: fadeInDown 0.6s ease-out;
-            }
-
-            .animate-fadeIn {
-                animation: fadeIn 0.8s ease-out;
-            }
-
-            .animate-fadeInUp {
-                animation: fadeInUp 0.6s ease-out;
-            }
-
-            .animate-expand {
-                animation: expand 1s ease-out;
-            }
-
-            .animate-bounce-slow {
-                animation: bounce-slow 2s ease-in-out infinite;
-            }
-
-            .animation-delay-200 { animation-delay: 0.2s; }
-            .animation-delay-400 { animation-delay: 0.4s; }
-            .animation-delay-600 { animation-delay: 0.6s; }
-            .animation-delay-800 { animation-delay: 0.8s; }
-            .animation-delay-1000 { animation-delay: 1s; }
-            .animation-delay-1200 { animation-delay: 1.2s; }
-        `}</style>
-    </div>
-  ) : null
+                .animate-fadeInDown { animation: fadeInDown 0.7s ease-out; }
+                .animate-fadeIn { animation: fadeIn 0.8s ease-out; }
+                .animate-fadeInUp { animation: fadeInUp 0.7s ease-out; }
+                .animation-delay-200 { animation-delay: 0.2s; }
+                .animation-delay-400 { animation-delay: 0.4s; }
+            `}</style>
+        </div>
+    ) : null;
 }
 
-export default EditPost
+export default EditPost;
