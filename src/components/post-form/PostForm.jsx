@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button, Input, RTE, Select } from "..";
 import appwriteService from "../../appwrite/config";
@@ -7,7 +7,15 @@ import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 
 export default function PostForm({ post }) {
-    const { register, handleSubmit, watch, setValue, control, getValues, formState: { errors } } = useForm({
+    const {
+        register,
+        handleSubmit,
+        watch,
+        setValue,
+        control,
+        getValues,
+        formState: { errors },
+    } = useForm({
         defaultValues: {
             title: post?.title || "",
             slug: post?.$id || "",
@@ -18,319 +26,227 @@ export default function PostForm({ post }) {
 
     const navigate = useNavigate();
     const userData = useSelector((state) => state.auth.userData);
-    const [ isSubmitting, setIsSubmitting ] = useState(false);
-    const [ imagePreview, setImagePreview ] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [imagePreview, setImagePreview] = useState(null);
 
-    // Load existing image preview when editing
-    React.useEffect(() => {
-        if (post && post.featuredImage) {
+    useEffect(() => {
+        if (post?.featuredImage) {
             try {
-                const existingImageUrl = appwriteService.getFileView(post.featuredImage);
-                setImagePreview(existingImageUrl);
-            } catch (error) {
-                console.error("Error loading image preview:", error);
-            }
+                setImagePreview(appwriteService.getFileView(post.featuredImage));
+            } catch {}
         }
-    }, [ post ]);
-
+    }, [post]);
 
     const submit = async (data) => {
         setIsSubmitting(true);
         try {
             if (post) {
-                // UPDATING EXISTING POST
-                const file = data.image[ 0 ] ? await appwriteService.uploadFile(data.image[ 0 ]) : null;
+                const file = data.image?.[0]
+                    ? await appwriteService.uploadFile(data.image[0])
+                    : null;
 
-                if (file && file.$id) {
-                    await appwriteService.deleteFile(post.featuredImage);
-                }
+                if (file?.$id) await appwriteService.deleteFile(post.featuredImage);
 
                 const { image, ...updateData } = data;
 
                 const dbPost = await appwriteService.updatePost(post.$id, {
                     ...updateData,
-                    featuredImage: file ? file.$id : post.featuredImage,
+                    featuredImage: file?.$id || post.featuredImage,
                 });
 
-                if (dbPost) {
-                    navigate(`/post/${dbPost.$id}`);
-                } else {
-                    alert("Failed to update post");
-                }
+                if (dbPost) navigate(`/post/${dbPost.$id}`);
             } else {
-                // CREATING NEW POST
-                if (!data.image || !data.image[ 0 ]) {
-                    alert("Please select an image");
+                if (!data.image?.[0]) {
                     setIsSubmitting(false);
-                    return;
+                    return alert("Please select an image");
                 }
 
-                let userId;
-                if (userData && userData.$id) {
-                    userId = userData.$id;
-                } else {
-                    const currentUser = await authService.getCurrentUser();
-                    if (!currentUser || !currentUser.$id) {
-                        alert("Please login to create posts");
-                        navigate("/login");
-                        return;
-                    }
-                    userId = currentUser.$id;
+                let userId = userData?.$id;
+                if (!userId) {
+                    const user = await authService.getCurrentUser();
+                    if (!user?.$id) return navigate("/login");
+                    userId = user.$id;
                 }
 
-                const file = await appwriteService.uploadFile(data.image[ 0 ]);
-
-                if (!file || !file.$id) {
-                    console.error("File upload failed");
-                    alert("Failed to upload image. Please try again.");
-                    setIsSubmitting(false);
-                    return;
-                }
-
-                const fileId = file.$id;
+                const file = await appwriteService.uploadFile(data.image[0]);
+                if (!file?.$id) return;
 
                 const { image, ...postData } = data;
 
                 const dbPost = await appwriteService.createPost({
                     ...postData,
-                    featuredImage: fileId,
-                    userId: userId
+                    featuredImage: file.$id,
+                    userId,
                 });
 
-                if (dbPost) {
-                    navigate(`/post/${dbPost.$id}`);
-                } else {
-                    await appwriteService.deleteFile(fileId);
-                    alert("Failed to create post");
-                }
+                if (dbPost) navigate(`/post/${dbPost.$id}`);
             }
         } catch (error) {
-            console.error("Submit error:", error);
-            alert("An error occurred: " + error.message);
-        } finally {
-            setIsSubmitting(false);
+            console.error(error);
         }
+        setIsSubmitting(false);
     };
 
     const slugTransform = useCallback((value) => {
-        if (value && typeof value === "string")
-            return value
-                .trim()
-                .toLowerCase()
-                .replace(/[^a-zA-Z\d\s]+/g, "-")
-                .replace(/\s/g, "-");
-
-        return "";
+        return (
+            value
+                ?.trim()
+                ?.toLowerCase()
+                ?.replace(/[^a-zA-Z\d\s]+/g, "-")
+                ?.replace(/\s+/g, "-") || ""
+        );
     }, []);
 
-    // Handle image preview
     const handleImageChange = (e) => {
-        const file = e.target.files[ 0 ];
+        const file = e.target.files?.[0];
         if (file) {
             const reader = new FileReader();
-            reader.onloadend = () => {
-                setImagePreview(reader.result);
-            };
+            reader.onloadend = () => setImagePreview(reader.result);
             reader.readAsDataURL(file);
         }
     };
 
-    React.useEffect(() => {
-        const subscription = watch((value, { name }) => {
-            if (name === "title") {
-                setValue("slug", slugTransform(value.title), { shouldValidate: true });
-            }
+    useEffect(() => {
+        const sub = watch((value, { name }) => {
+            if (name === "title") setValue("slug", slugTransform(value.title));
         });
-
-        return () => subscription.unsubscribe();
-    }, [ watch, slugTransform, setValue ]);
+        return () => sub.unsubscribe();
+    }, [watch]);
 
     return (
-        <form onSubmit={handleSubmit(submit)} className="flex flex-col lg:flex-row flex-wrap gap-6 animate-fadeIn">
-            {/* Left Column - Main Content */}
+        <form
+            onSubmit={handleSubmit(submit)}
+            className="flex flex-col lg:flex-row gap-8 p-6 bg-[#05070d] text-cyan-300
+                       border border-cyan-800 rounded-2xl 
+                       shadow-[0_0_30px_#00eaff55] animate-fadeIn"
+        >
+            {/* LEFT SIDE */}
             <div className="w-full lg:w-2/3 space-y-6">
-                {/* Title Input */}
-                <div className="transform transition-all duration-300 hover:translate-x-1">
+                {/* Title */}
+                <div className="transition hover:translate-x-1">
                     <Input
                         label="Title :"
-                        placeholder="Enter your post title..."
-                        className="mb-4"
+                        placeholder="Enter title"
+                        className="bg-[#0b0f18] text-cyan-300 border-cyan-700"
                         {...register("title", { required: "Title is required" })}
                     />
                     {errors.title && (
-                        <p className="text-red-500 text-sm mt-1 animate-shake">{errors.title.message}</p>
+                        <p className="text-red-400 text-sm animate-shake">
+                            {errors.title.message}
+                        </p>
                     )}
                 </div>
 
-                {/* Slug Input */}
-                <div className="transform transition-all duration-300 hover:translate-x-1">
+                {/* Slug */}
+                <div className="transition hover:translate-x-1">
                     <Input
                         label="Slug :"
-                        placeholder="post-url-slug"
-                        className="mb-4"
+                        placeholder="post-slug"
+                        className="bg-[#0b0f18] text-cyan-300 border-cyan-700"
                         {...register("slug", { required: "Slug is required" })}
-                        onInput={(e) => {
-                            setValue("slug", slugTransform(e.currentTarget.value), { shouldValidate: true });
-                        }}
+                        onInput={(e) =>
+                            setValue("slug", slugTransform(e.target.value))
+                        }
                     />
                     {errors.slug && (
-                        <p className="text-red-500 text-sm mt-1 animate-shake">{errors.slug.message}</p>
+                        <p className="text-red-400 text-sm animate-shake">
+                            {errors.slug.message}
+                        </p>
                     )}
                 </div>
 
-                {/* Rich Text Editor */}
-                <div className="transform transition-all duration-300">
-                    <RTE label="Content :" name="content" control={control} defaultValue={getValues("content")} />
+                {/* CONTENT */}
+                <div className="rounded-xl border border-cyan-800 bg-[#090d14] 
+                                shadow-[0_0_20px_#00eaff33] p-2">
+                    <RTE
+                        label="Content :"
+                        name="content"
+                        control={control}
+                        defaultValue={getValues("content")}
+                    />
                 </div>
             </div>
 
-            {/* Right Column - Sidebar */}
-            <div className="w-full lg:w-1/3 lg:pl-6">
-                <div className="lg:sticky lg:top-24 space-y-6">
-                    {/* Featured Image Card */}
-                    <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1 animate-slideInRight">
-                        <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center">
-                            <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            Featured Image
-                        </h3>
-                        <Input
-                            label=""
-                            type="file"
-                            className="mb-4"
-                            accept="image/png, image/jpg, image/jpeg, image/gif"
-                            {...register("image", { required: !post })}
-                            onChange={(e) => {
-                                register("image").onChange(e);
-                                handleImageChange(e);
-                            }}
-                        />
+            {/* RIGHT SIDE */}
+            <div className="w-full lg:w-1/3 space-y-6">
+                {/* IMAGE CARD */}
+                <div className="p-6 rounded-xl bg-[#080b13] border border-cyan-800 
+                                shadow-[0_0_20px_#00eaff44]">
+                    <h3 className="text-cyan-400 font-semibold mb-4 flex items-center gap-2">
+                        <span className="w-3 h-3 bg-cyan-400 rounded-full 
+                                         shadow-[0_0_10px_#00eaff]"></span>
+                        Featured Image
+                    </h3>
 
-                        {/* Image Preview - FIXED */}
-                        {imagePreview && (
-                            <div className="w-full mb-4 rounded-xl overflow-hidden bg-gradient-to-br from-gray-50 to-white shadow-md hover:shadow-xl transition-all duration-300">
-                                <div className="relative group">
-                                    <img
-                                        src={imagePreview}
-                                        alt={post ? "Current image" : "Preview"}
-                                        className="w-full h-48 object-cover border-2 border-gray-200 group-hover:border-blue-400 transition-all duration-300 group-hover:scale-105"
-                                    />
+                    <Input
+                        type="file"
+                        accept="image/*"
+                        className="bg-[#0b0f18] border-cyan-700 text-cyan-200"
+                        {...register("image", { required: !post })}
+                        onChange={(e) => {
+                            register("image").onChange(e);
+                            handleImageChange(e);
+                        }}
+                    />
 
-                                    {/* Hover Overlay */}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                                        <div className="absolute bottom-3 left-3 right-3">
-                                            <div className="flex items-center justify-between text-white">
-                                                <span className="text-sm font-semibold drop-shadow-lg">
-                                                    {post ? "Current Image" : "New Image"}
-                                                </span>
-                                                <svg className="w-5 h-5 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                </svg>
-                                            </div>
-                                        </div>
-                                    </div>
+                    {imagePreview && (
+                        <div className="mt-4 rounded-xl overflow-hidden 
+                                        shadow-[0_0_20px_#00eaff44]">
+                            <img
+                                src={imagePreview}
+                                className="w-full h-48 object-cover border border-cyan-700 
+                                           hover:scale-105 transition"
+                            />
+                        </div>
+                    )}
+                </div>
 
-                                    {/* Corner Badge */}
-                                    <div className="absolute top-3 right-3 bg-blue-500 text-white text-xs px-3 py-1 rounded-full shadow-lg font-medium opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:scale-110">
-                                        Preview
-                                    </div>
-                                </div>
-                            </div>
-                        )}
+                {/* STATUS + SUBMIT */}
+                <div className="p-6 rounded-xl bg-[#080b13] border border-cyan-800 
+                                shadow-[0_0_20px_#00eaff44]">
+                    <h3 className="text-cyan-400 font-semibold mb-4 flex items-center gap-2">
+                        <span className="w-3 h-3 bg-cyan-400 rounded-full 
+                                         shadow-[0_0_10px_#00eaff]"></span>
+                        Publish Settings
+                    </h3>
 
+                    <Select
+                        options={["active", "inactive"]}
+                        label="Status"
+                        className="text-cyan-200 bg-[#0b0f18] border-cyan-700"
+                        {...register("status", { required: true })}
+                    />
 
-                    </div>
-
-                    {/* Status & Submit Card */}
-                    <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-all duration-300 transform hover:-translate-y-1 animate-slideInRight animation-delay-200">
-                        <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center">
-                            <svg className="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                            Publish Settings
-                        </h3>
-                        <Select
-                            options={[ "active", "inactive" ]}
-                            label="Status"
-                            className="mb-4"
-                            {...register("status", { required: true })}
-                        />
-                        <Button
-                            type="submit"
-                            bgColor={post ? "bg-green-500 hover:bg-green-600" : "bg-blue-500 hover:bg-blue-600"}
-                            className="w-full group relative overflow-hidden"
-                            disabled={isSubmitting}
-                        >
-                            <span className="relative z-10 flex items-center justify-center">
-                                {isSubmitting ? (
-                                    <>
-                                        <svg className="animate-spin h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                        </svg>
-                                        {post ? "Updating..." : "Submitting..."}
-                                    </>
-                                ) : (
-                                    <>
-                                        {post ? (
-                                            <>
-                                                <svg className="w-5 h-5 mr-2 transition-transform group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                                </svg>
-                                                Update Post
-                                            </>
-                                        ) : (
-                                            <>
-                                                <svg className="w-5 h-5 mr-2 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                                                </svg>
-                                                Publish Post
-                                            </>
-                                        )}
-                                    </>
-                                )}
-                            </span>
-                        </Button>
-                    </div>
+                    <Button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="mt-4 w-full bg-cyan-500 hover:bg-cyan-400 
+                                   text-black font-bold 
+                                   shadow-[0_0_15px_#00eaff] 
+                                   hover:shadow-[0_0_25px_#00eaff] transition-all"
+                    >
+                        {isSubmitting
+                            ? "Loading..."
+                            : post
+                            ? "Update Post"
+                            : "Publish Post"}
+                    </Button>
                 </div>
             </div>
 
-            {/* Add CSS animations */}
+            {/* Animations */}
             <style>{`
-                @keyframes fadeIn {
-                    from { opacity: 0; }
-                    to { opacity: 1; }
-                }
-                @keyframes slideInRight {
-                    from {
-                        opacity: 0;
-                        transform: translateX(30px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateX(0);
-                    }
+                @keyframes fadeIn { 
+                  from { opacity: 0 } 
+                  to { opacity: 1 } 
                 }
                 @keyframes shake {
-                    0%, 100% { transform: translateX(0); }
-                    25% { transform: translateX(-5px); }
-                    75% { transform: translateX(5px); }
+                  0%,100% { transform: translateX(0); }
+                  25% { transform: translateX(-5px); }
+                  75% { transform: translateX(5px); }
                 }
-                .animate-fadeIn {
-                    animation: fadeIn 0.5s ease-out;
-                }
-                .animate-slideInRight {
-                    animation: slideInRight 0.6s ease-out;
-                }
-                .animation-delay-200 {
-                    animation-delay: 0.2s;
-                }
-                .animate-shake {
-                    animation: shake 0.3s ease-in-out;
-                }
+                .animate-fadeIn { animation: fadeIn 0.5s ease-out; }
+                .animate-shake { animation: shake 0.3s ease-in-out; }
             `}</style>
         </form>
     );
