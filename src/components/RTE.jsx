@@ -1,14 +1,12 @@
-import React from 'react'
-import { Editor } from '@tinymce/tinymce-react';
-import { Controller } from 'react-hook-form';
+import React from "react";
+import { Editor } from "@tinymce/tinymce-react";
+import { Controller } from "react-hook-form";
 
-
-
-export default function RTE({name, control, label, defaultValue = ""}) {
+export default function RTE({ name, control, label, defaultValue = "" }) {
   return (
-    <div className='w-full'> 
+    <div className="w-full">
       {label && (
-        <label className='inline-block mb-3 text-xs sm:text-sm font-medium text-gray-700'>
+        <label className="inline-block mb-3 text-sm font-medium text-cyan-300 drop-shadow-[0_0_6px_#00eaff]">
           {label}
         </label>
       )}
@@ -16,21 +14,27 @@ export default function RTE({name, control, label, defaultValue = ""}) {
       <Controller
         name={name || "content"}
         control={control}
-        render={({field: {onChange}}) => (
-          <div className='border border-gray-300 rounded-lg overflow-hidden shadow-sm hover:border-gray-400 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-opacity-20 transition-all duration-200'>
+        render={({ field: { onChange } }) => (
+          <div
+            className="
+              rounded-lg overflow-hidden
+              border border-cyan-700
+              bg-[#061922]
+              shadow-[0_0_12px_#00eaff55]
+              transition-all duration-300
+              hover:shadow-[0_0_20px_#00eaffaa]
+              focus-within:border-cyan-400
+              focus-within:shadow-[0_0_25px_#00eaff]
+            "
+          >
             <Editor
               apiKey={import.meta.env.VITE_TINYMCE_API_KEY}
-              
               initialValue={defaultValue}
+              onEditorChange={onChange}
               init={{
-                height: 400, // Smaller default height for better mobile experience
-                min_height: 300,
-                max_height: 800,
+                height: 450,
                 menubar: true,
-                mobile: {
-                  menubar: true,
-                  toolbar_mode: 'sliding'
-                },
+
                 plugins: [
                   "image",
                   "advlist",
@@ -49,63 +53,79 @@ export default function RTE({name, control, label, defaultValue = ""}) {
                   "table",
                   "help",
                   "wordcount",
-                  "emoticons"
+                  "emoticons",
                 ],
+
                 toolbar:
-                  "undo redo | blocks | bold italic forecolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image media | removeformat code fullscreen | help",
-                toolbar_mode: 'sliding', // Better for responsive
+                  "undo redo | bold italic forecolor backcolor | " +
+                  "alignleft aligncenter alignright alignjustify | " +
+                  "bullist numlist outdent indent | link image media | code fullscreen",
+
                 content_style: `
-                  body { 
-                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-                    font-size: 16px;
-                    line-height: 1.6;
-                    color: #1f2937;
-                    padding: 16px;
-                  }
-                  @media (max-width: 640px) {
                     body {
-                      font-size: 14px;
-                      padding: 12px;
+                        font-family: 'Inter', sans-serif;
+                        font-size: 16px;
+                        line-height: 1.6;
+                        color: #d4f5ff;
+                        background-color: #061922;
                     }
-                  }
+
+                    ::selection {
+                        background: #00eaff55;
+                    }
+
+                    /* Headings with Glow */
+                    h1, h2, h3, h4 {
+                        color: #00eaff;
+                        text-shadow: 0 0 10px #00eaff;
+                    }
+
+                    /* Neon borders for tables */
+                    table, th, td {
+                        border-color: #00eaff66 !important;
+                    }
+
+                    /* Images */
+                    img {
+                        border-radius: 8px;
+                        box-shadow: 0 0 12px #00eaff44;
+                    }
+
+                    /* Scrollbar */
+                    ::-webkit-scrollbar {
+                        width: 10px;
+                    }
+                    ::-webkit-scrollbar-track {
+                        background: #041018;
+                    }
+                    ::-webkit-scrollbar-thumb {
+                        background: #00eaff88;
+                        border-radius: 10px;
+                    }
                 `,
-                // Better image handling
-                automatic_uploads: true,
-                file_picker_types: 'image',
-                
-                // Paste handling
-                paste_data_images: true,
-                paste_as_text: false,
-                
-                // Better UX
-                branding: false, // Remove "Powered by TinyMCE"
+
+                skin: "oxide-dark",
+                content_css: "dark",
+
+                branding: false,
                 promotion: false,
-                resize: true,
-                
-                // Accessibility
-                accessibility_focus: true,
-                
-                // Content formatting
-                block_formats: 'Paragraph=p; Heading 1=h1; Heading 2=h2; Heading 3=h3; Heading 4=h4; Preformatted=pre',
-                
-                // Link settings
-                link_default_target: '_blank',
-                link_title: false,
-                target_list: false,
-                
-                // Responsive images
+                toolbar_mode: "sliding",
+
+                link_default_target: "_blank",
                 image_advtab: true,
                 image_caption: true,
+
+                // Responsive Images
                 image_class_list: [
-                  {title: 'Responsive', value: 'img-fluid'},
-                  {title: 'Full Width', value: 'w-full'},
+                  { title: "Responsive", value: "w-full" },
+                  { title: "Rounded", value: "rounded-lg" },
                 ],
               }}
-              onEditorChange={onChange}
             />
           </div>
         )}
       />
     </div>
-  )
+  );
 }
+
