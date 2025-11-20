@@ -26,6 +26,9 @@ function Comment({ postId, userId }) {
     await service.createComment(postId, userId, input.trim());
     setInput("");
     fetchComments();
+
+    setToastMessage("Comment added!");
+    setTimeout(() => setToastMessage(null), 2000);
   }
 
   async function confirmDeleteComment() {
@@ -38,16 +41,17 @@ function Comment({ postId, userId }) {
     );
     setCommentToDelete(null);
     fetchComments();
-    setToastMessage("Comment deleted successfully!");
-    setTimeout(() => setToastMessage(null), 3000);
+
+    setToastMessage("Comment deleted!");
+    setTimeout(() => setToastMessage(null), 2000);
+  }
+
+  function requestDelete(id) {
+    setCommentToDelete(id);
   }
 
   function cancelDelete() {
     setCommentToDelete(null);
-  }
-
-  function requestDelete(commentId) {
-    setCommentToDelete(commentId);
   }
 
   function startEditing(id, content) {
@@ -64,11 +68,13 @@ function Comment({ postId, userId }) {
       id,
       { content: editingText.trim() }
     );
+
     setEditingCommentId(null);
     setEditingText("");
     fetchComments();
-    setToastMessage("Comment updated successfully!");
-    setTimeout(() => setToastMessage(null), 3000);
+
+    setToastMessage("Comment updated!");
+    setTimeout(() => setToastMessage(null), 2000);
   }
 
   function cancelEdit() {
@@ -78,40 +84,52 @@ function Comment({ postId, userId }) {
 
   return (
     <>
+      {/* TOAST */}
       {toastMessage && (
-        <div className="fixed top-5 right-5 bg-green-600 text-white px-4 py-2 rounded shadow-lg animate-fadeInDown z-50">
+        <div className="fixed top-5 right-5 bg-[#041018] text-cyan-300 px-5 py-2 rounded-lg border border-cyan-700 shadow-[0_0_15px_#00eaff77] animate-fadeInDown z-50">
           {toastMessage}
         </div>
       )}
 
       <section className="mt-6">
-        <form onSubmit={addComment} className="flex gap-2 mb-4">
+        {/* Add Comment */}
+        <form
+          onSubmit={addComment}
+          className="flex gap-3 mb-4 bg-[#05070d] p-3 rounded-xl border border-cyan-800 shadow-[0_0_20px_#00eaff33]"
+        >
           <input
             type="text"
-            className="flex-1 border rounded px-3 py-2"
-            placeholder="Add a comment..."
+            className="flex-1 bg-[#0a0f16] text-cyan-300 border border-cyan-800 px-3 py-2 rounded-lg focus:outline-none focus:border-cyan-400 shadow-[0_0_10px_#00eaff33]"
+            placeholder="Add a futuristic comment..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
-          <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors">
+
+          <button
+            className="px-5 py-2 rounded-lg bg-cyan-500 text-black font-semibold
+                       hover:bg-cyan-400 hover:shadow-[0_0_15px_#00eaff] 
+                       transition-all"
+          >
             Post
           </button>
         </form>
 
-        {/* Delete confirmation box */}
+        {/* Delete Confirmation */}
         {commentToDelete && (
-          <div className="mb-4 p-4 bg-yellow-100 border border-yellow-300 rounded shadow">
-            <p className="mb-2 font-semibold">Delete this comment?</p>
-            <div className="flex gap-2">
+          <div className="mb-4 p-4 bg-[#041018] border border-red-500 rounded-lg shadow-[0_0_20px_#ff003355]">
+            <p className="mb-3 text-cyan-300 font-semibold">
+              ⚠ Delete this comment?
+            </p>
+            <div className="flex gap-3">
               <button
                 onClick={confirmDeleteComment}
-                className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                className="px-4 py-1 bg-red-600 text-white rounded hover:bg-red-700 shadow-[0_0_10px_#ff2222aa]"
               >
                 Yes, delete
               </button>
               <button
                 onClick={cancelDelete}
-                className="bg-gray-300 px-3 py-1 rounded hover:bg-gray-400"
+                className="px-4 py-1 bg-cyan-900 text-cyan-300 rounded hover:bg-cyan-800 border border-cyan-600"
               >
                 Cancel
               </button>
@@ -119,26 +137,31 @@ function Comment({ postId, userId }) {
           </div>
         )}
 
-        <div>
+        {/* Comments List */}
+        <div className="space-y-4">
           {comments.map((c) => (
-            <div key={c.$id} className="p-3 border-b flex flex-col gap-2">
+            <div
+              key={c.$id}
+              className="p-4 rounded-xl bg-[#06090f] border border-cyan-800 
+                         shadow-[0_0_15px_#00eaff22]"
+            >
               {editingCommentId === c.$id ? (
                 <>
                   <textarea
-                    className="w-full border rounded p-2"
+                    className="w-full bg-[#0b1018] text-cyan-300 border border-cyan-700 p-2 rounded"
                     value={editingText}
                     onChange={(e) => setEditingText(e.target.value)}
                   />
-                  <div className="flex gap-2">
+                  <div className="flex gap-3 mt-2">
                     <button
                       onClick={() => saveEdit(c.$id)}
-                      className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
+                      className="px-4 py-1 bg-cyan-500 text-black rounded hover:bg-cyan-400 shadow-[0_0_10px_#00eaff]"
                     >
                       Save
                     </button>
                     <button
                       onClick={cancelEdit}
-                      className="bg-gray-300 px-3 py-1 rounded hover:bg-gray-400"
+                      className="px-4 py-1 bg-cyan-900 text-cyan-300 rounded border border-cyan-600 hover:bg-cyan-800"
                     >
                       Cancel
                     </button>
@@ -146,18 +169,19 @@ function Comment({ postId, userId }) {
                 </>
               ) : (
                 <>
-                  <p className="text-gray-700">{c.content}</p>
-                  {c.userId === userId && !commentToDelete && !editingCommentId && (
-                    <div className="flex gap-2 mt-1">
+                  <p className="text-cyan-200">{c.content}</p>
+
+                  {c.userId === userId && !commentToDelete && (
+                    <div className="flex gap-3 mt-2">
                       <button
                         onClick={() => startEditing(c.$id, c.content)}
-                        className="text-sm text-blue-500 hover:underline"
+                        className="text-sm text-cyan-400 hover:underline"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => requestDelete(c.$id)}
-                        className="text-sm text-red-500 hover:underline"
+                        className="text-sm text-red-400 hover:underline"
                       >
                         Delete
                       </button>
@@ -170,25 +194,17 @@ function Comment({ postId, userId }) {
         </div>
       </section>
 
-      <style>
-        {`
-          @keyframes fadeInDown {
-            from {
-              opacity: 0;
-              transform: translateY(-20px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-          .animate-fadeInDown {
-            animation: fadeInDown 0.3s ease forwards;
-          }
-        `}
-      </style>
+      {/* CUSTOM ANIMATIONS */}
+      <style>{`
+        @keyframes fadeInDown {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeInDown { animation: fadeInDown .3s ease-out; }
+      `}</style>
     </>
   );
 }
 
 export default Comment;
+
