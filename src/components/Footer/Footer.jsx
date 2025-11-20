@@ -107,7 +107,7 @@ function Footer() {
 
                             {/* GitHub SVG */}
                             <a
-                                href="https://github.com/Abhishek-Sharma08"
+                                href="https://github.com/saksham1782006"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="w-12 h-12 flex items-center justify-center rounded-xl border border-slate-700 bg-slate-900 
@@ -125,7 +125,7 @@ function Footer() {
 
                             {/* LinkedIn SVG */}
                             <a
-                                href="https://www.linkedin.com/in/abhishek-sharma-796353363/"
+                                href="https://www.linkedin.com/in/saksham-mishra-39570834b/"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="w-12 h-12 flex items-center justify-center rounded-xl border border-slate-700 bg-slate-900 
