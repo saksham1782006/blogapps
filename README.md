@@ -4,7 +4,7 @@ A modern blogging platform built with React and Appwrite. This web app enables u
 
 ## Live Demo
 
-Check out the live version of the Blog App [here](https://blog-app-abhi.netlify.app/).
+Check out the live version of the Blog App [here](https://thinkmmm.netlify.app).
 
 ## Features
 
